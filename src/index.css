@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+/*
+  A plain black-on-white calendar, deliberately undesigned: no accent
+  color, no decorative typeface. The owner asked for a literal digital
+  version of a physical wall calendar, not a themed product — see
+  CLAUDE.md before changing this file.
+
+  Deliberately one fixed theme, not dark-mode-aware — this runs on a known
+  in-store device, and the appearance shouldn't depend on whatever system
+  theme setting happens to be on. Always stark white (see CLAUDE.md).
+  Mirrored as plain hex constants in src/config/theme.js for places (the PWA
+  manifest) that can't read CSS variables.
+*/
+@theme {
+  /* Plain system UI font — no network font request, no decorative
+     typeface. The owner explicitly asked for this over a "designed" look. */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  --color-paper: #ffffff;
+  --color-ink: #1a1712;
+  --color-ink-muted: #4a4640;
+  --color-ink-faint: #a9a399;
+  --color-hairline: #bdb7ac;
+  --color-highlight: #f0efec;
+  --color-danger: #b3261e;
+  --color-danger-soft: #fbe9e7;
+}
+
+/* Must be in @layer base, not left unlayered — Tailwind's utilities live in
+   @layer utilities, and unlayered CSS always wins over ANY layered CSS
+   regardless of specificity. An unlayered `button { min-height: 44px }`
+   here would silently block every min-h-* utility from taking effect. */
+@layer base {
+  html {
+    color-scheme: light;
+    /* The root itself scales with viewport width, not just individual
+       clamp()s — every rem-based measurement in the app (buttons, inputs,
+       appointment-line text, the day number...) grows together on a big
+       front-desk monitor instead of hitting an early rem ceiling. Floor
+       matches the old fixed 16px default (nothing shrinks); cap keeps
+       things from ballooning past very large displays. */
+    font-size: clamp(16px, 13px + 0.42vw, 24px);
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-paper);
+    color: var(--color-ink);
+    /* Big by default — this is read at a glance by someone standing at a
+       counter. When in doubt, go bigger, not smaller (see CLAUDE.md). Size
+       is deliberately NOT set here — it inherits from html's fluid
+       font-size above so it scales with the screen too. */
+    font-family: var(--font-sans);
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #root {
+    min-height: 100svh;
+  }
+
+  /* A minimum comfortable tap target everywhere, per the non-tech-savvy,
+     fat-finger-friendly requirement — easy to forget on one-off elements. */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: default;
+  }
+
+  input,
+  select {
+    font: inherit;
+  }
+
+  /* A thick, unmissable focus ring for keyboard users. */
+  :focus-visible {
+    outline: 3px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* One appointment line inside a calendar day cell: "9:45 Full set".
+     Scales with the screen so a wide front-desk monitor gets bigger text,
+     never extra empty margin. The day number is what stays small. */
+  :root {
+    --appt-size: clamp(1.05rem, 0.45rem + 0.85vw, 1.65rem);
+  }
+
+  .appt-line {
+    font-size: var(--appt-size);
+    /* Tight enough that a busy day's wrapped/stacked lines don't cost more
+       height than they need to — never so tight the lines touch. */
+    line-height: 1.15;
+  }
+
+  /* The day number: small, in a short row of its own at the top-left, so
+     it costs well under one appointment line of height and never forces
+     the first appointment to be cut short. Sized off the appointment text
+     so the proportions hold at every screen size. */
+  .day-number {
+    font-size: calc(var(--appt-size) * 0.95);
+    font-weight: 600;
+    height: calc(var(--appt-size) * 1.2);
+    min-width: calc(var(--appt-size) * 1.2);
+    min-height: 0;
+  }
+}
