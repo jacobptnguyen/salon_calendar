@@ -1,5 +1,9 @@
 # Salon Calendar
 
+## [**Live demo →**](https://saloncalendar.vercel.app/)
+
+![The calendar, showing a month full of appointments](docs/images/calendar-screenshot.png)
+
 ## The problem
 
 Right now, when a customer calls, an employee writes their name and time
