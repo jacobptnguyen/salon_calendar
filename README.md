@@ -11,9 +11,9 @@ on a paper appointment book. It works, but it doesn't scale past one
 copy in one place, and it's one coffee spill away from lost bookings.
 
 Digital calendars (Google Calendar, etc.) aren't a real alternative here —
-the staff using this aren't comfortable with them. Multiple calendars,
-event dialogs, timezones, invites: it's the wrong tool for someone who
-just wants to write down a name and a time.
+the staff using this aren't comfortable with them. Event dialogs,
+timezones, invites, a separate login for every person: it's the wrong
+tool for someone who just wants to write down a name and a time.
 
 ## Highlights
 
