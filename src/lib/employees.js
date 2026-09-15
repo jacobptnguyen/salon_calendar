@@ -16,6 +16,18 @@ export async function createEmployee(name) {
   return data
 }
 
+export async function updateEmployee(id, name) {
+  const { data, error } = await supabase.from(TABLE).update({ name }).eq('id', id).select().single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deleteEmployee(id) {
+  const { error } = await supabase.from(TABLE).delete().eq('id', id)
+  if (error) throw error
+}
+
 // One shared realtime channel (owned by EmployeesProvider), same pattern as
 // src/lib/appointments.js's subscribeToAppointments — so a name added on
 // another device or tab shows up here without a manual refresh.

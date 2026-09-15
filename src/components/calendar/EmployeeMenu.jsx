@@ -8,9 +8,20 @@ import { useEmployeesContext } from '../../context/EmployeesProvider'
 // Which menu (if any) is open is owned by MonthCalendar, same reasoning as
 // which day is open for editing: only one at a time, closed by outside
 // click or Escape.
+//
+// Renaming/removing an employee reuses that same pattern, but a name is
+// also the click target that selects it as the filter — one click can't
+// mean both. So: clicking a name selects it and closes the menu, same as
+// always; clicking the *already-selected* name (the one already
+// highlighted) opens it for editing in place instead, the same way
+// clicking an open day's line edits that line. Clearing it and clicking
+// away removes that employee, exactly like clearing an appointment line —
+// no delete button, no confirmation.
 export function EmployeeMenu({ isOpen, onToggle, onClose }) {
   const { employees, selectedEmployeeId, setSelectedEmployeeId, addEmployee } = useEmployeesContext()
   const [adding, setAdding] = useState(false)
+  const [error, setError] = useState('')
+  const [editingEmployeeId, setEditingEmployeeId] = useState(null)
   const inputRef = useRef(null)
 
   const selectedName = selectedEmployeeId ? employees.find((employee) => employee.id === selectedEmployeeId)?.name : null
@@ -19,17 +30,30 @@ export function EmployeeMenu({ isOpen, onToggle, onClose }) {
   function choose(employeeId) {
     setSelectedEmployeeId(employeeId)
     setAdding(false)
+    setEditingEmployeeId(null)
     onClose()
   }
 
   async function commitNewEmployee() {
     const name = (inputRef.current?.value ?? '').trim()
-    setAdding(false)
-    if (!name) return // nothing typed — nothing to do, same as a blank appointment line
+    if (!name) {
+      // nothing typed — nothing to do, same as a blank appointment line
+      setAdding(false)
+      return
+    }
 
-    const created = await addEmployee(name)
-    setSelectedEmployeeId(created.id)
-    onClose()
+    try {
+      const created = await addEmployee(name)
+      setAdding(false)
+      setError('')
+      setSelectedEmployeeId(created.id)
+      onClose()
+    } catch {
+      // Never fail silently — same rule as AppointmentRow. Leave the input
+      // open with what was typed so the name isn't lost and blurring again
+      // (or Enter) retries.
+      setError('Not added. Please try again.')
+    }
   }
 
   function handleInputKeyDown(event) {
@@ -59,31 +83,47 @@ export function EmployeeMenu({ isOpen, onToggle, onClose }) {
             All
           </button>
 
-          {employees.map((employee) => (
-            <button
-              key={employee.id}
-              type="button"
-              onClick={() => choose(employee.id)}
-              className={`block w-full border-t-2 border-hairline px-5 py-3 text-left text-[1.3rem] font-bold text-ink ${
-                selectedEmployeeId === employee.id ? 'bg-highlight' : 'hover:bg-highlight'
-              }`}
-            >
-              {employee.name}
-            </button>
-          ))}
+          {employees.map((employee) =>
+            editingEmployeeId === employee.id ? (
+              <EmployeeEditRow
+                key={employee.id}
+                employee={employee}
+                onDone={() => setEditingEmployeeId(null)}
+                onDeleted={() => {
+                  setEditingEmployeeId(null)
+                  if (selectedEmployeeId === employee.id) setSelectedEmployeeId(null)
+                }}
+              />
+            ) : (
+              <button
+                key={employee.id}
+                type="button"
+                onClick={() => (selectedEmployeeId === employee.id ? setEditingEmployeeId(employee.id) : choose(employee.id))}
+                className={`block w-full border-t-2 border-hairline px-5 py-3 text-left text-[1.3rem] font-bold text-ink ${
+                  selectedEmployeeId === employee.id ? 'bg-highlight' : 'hover:bg-highlight'
+                }`}
+              >
+                {employee.name}
+              </button>
+            )
+          )}
 
           <div className="border-t-2 border-hairline">
             {adding ? (
-              <input
-                ref={inputRef}
-                type="text"
-                autoFocus
-                autoComplete="off"
-                aria-label="New employee name"
-                onKeyDown={handleInputKeyDown}
-                onBlur={commitNewEmployee}
-                className="block w-full px-5 py-3 text-[1.3rem] font-bold text-ink outline-none"
-              />
+              <div className="flex flex-col gap-0.5 px-5 py-3">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  autoFocus
+                  autoComplete="off"
+                  aria-label="New employee name"
+                  onKeyDown={handleInputKeyDown}
+                  onBlur={commitNewEmployee}
+                  onChange={() => error && setError('')}
+                  className="block w-full text-[1.3rem] font-bold text-ink outline-none"
+                />
+                {error && <p className="text-[0.8em] leading-snug font-bold text-danger">{error}</p>}
+              </div>
             ) : (
               <button
                 type="button"
@@ -96,6 +136,63 @@ export function EmployeeMenu({ isOpen, onToggle, onClose }) {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// One editable row, the same shape as DayCell's AppointmentRow: no Save
+// button, commits on blur or Enter, and clearing the name entirely removes
+// that employee — no delete button, no confirmation step.
+function EmployeeEditRow({ employee, onDone, onDeleted }) {
+  const { renameEmployee, removeEmployee } = useEmployeesContext()
+  const inputRef = useRef(null)
+  const [error, setError] = useState('')
+
+  function handleKeyDown(event) {
+    if (event.key === 'Enter') event.currentTarget.blur()
+  }
+
+  async function commit() {
+    const trimmed = (inputRef.current?.value ?? '').trim()
+
+    if (!trimmed) {
+      try {
+        await removeEmployee(employee.id)
+        onDeleted()
+      } catch {
+        setError('Not removed. Please try again.')
+      }
+      return
+    }
+
+    if (trimmed === employee.name) {
+      onDone()
+      return
+    }
+
+    try {
+      await renameEmployee(employee.id, trimmed)
+      onDone()
+    } catch {
+      setError('Not saved. Please try again.')
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-0.5 border-t-2 border-hairline px-5 py-3">
+      <input
+        ref={inputRef}
+        type="text"
+        defaultValue={employee.name}
+        autoFocus
+        autoComplete="off"
+        aria-label={`Edit employee name: ${employee.name}`}
+        onKeyDown={handleKeyDown}
+        onBlur={() => void commit()}
+        onChange={() => error && setError('')}
+        className="block w-full text-[1.3rem] font-bold text-ink outline-none"
+      />
+      {error && <p className="text-[0.8em] leading-snug font-bold text-danger">{error}</p>}
     </div>
   )
 }

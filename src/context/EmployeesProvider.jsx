@@ -46,11 +46,24 @@ export function EmployeesProvider({ children }) {
     return created
   }, [])
 
+  const renameEmployee = useCallback(async (id, name) => {
+    const updated = await api.updateEmployee(id, name)
+    setEmployees((prev) => prev.map((employee) => (employee.id === id ? updated : employee)))
+    return updated
+  }, [])
+
+  const removeEmployee = useCallback(async (id) => {
+    await api.deleteEmployee(id)
+    setEmployees((prev) => prev.filter((employee) => employee.id !== id))
+  }, [])
+
   const value = {
     employees,
     loading,
     error,
     addEmployee,
+    renameEmployee,
+    removeEmployee,
     selectedEmployeeId,
     setSelectedEmployeeId,
   }
