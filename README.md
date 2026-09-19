@@ -7,8 +7,13 @@
 ## The problem
 
 Right now, when a customer calls, an employee writes their name and time
-on a paper appointment book. It works, but it doesn't scale past one
-copy in one place, and it's one coffee spill away from lost bookings.
+on a paper calendar — and every employee has their own physical calendar.
+It works, but it means many separate copies in many places, no single view
+of the whole salon, and it's one coffee spill away from lost bookings.
+
+This digital calendar replaces all of those physical calendars with one
+shared calendar that everyone can see, and that can still be filtered down
+to any one employee's appointments.
 
 Digital calendars (Google Calendar, etc.) aren't a real alternative here —
 the staff using this aren't comfortable with them. Event dialogs,
