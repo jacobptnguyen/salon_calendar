@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getSession, onAuthStateChange, signOut } from '../lib/auth'
 import { idleTimeoutHours } from '../config/copy'
+import { isDemo } from '../lib/demo'
 
 const HIDDEN_AT_KEY = 'salon-calendar-hidden-at'
 const IDLE_TIMEOUT_MS = idleTimeoutHours * 60 * 60 * 1000
@@ -17,10 +18,13 @@ function isStale() {
 // itself out automatically, so staff just re-enter the PIN when needed
 // instead of a session silently living forever.
 export function useAuthSession() {
-  const [session, setSession] = useState(null)
-  const [status, setStatus] = useState('loading')
+  // The demo build has no login (see lib/demo.js): always "signed in".
+  const [session, setSession] = useState(isDemo ? {} : null)
+  const [status, setStatus] = useState(isDemo ? 'ready' : 'loading')
 
   useEffect(() => {
+    if (isDemo) return
+
     let active = true
 
     getSession().then(({ data }) => {

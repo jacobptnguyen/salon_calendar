@@ -139,6 +139,15 @@ monitor. Design and lay out every screen for that first:
   employee's own filter. Editing a line's text never reassigns who it's
   tagged to; that only ever happens at creation.
 
+## Demo build vs. the real calendar
+
+The public demo link (in the README) is the same code built with
+`VITE_DEMO=true`: no database, no login, sample appointments held in
+memory (`lib/demo.js`), reset on reload. It must never be pointed at the
+real Supabase project — the real deployment is a separate Vercel project
+with its own env vars and an unlisted URL, and its URL never goes in this
+repo. Keep any demo/real difference in env vars, not in forked code.
+
 ## Where the rest lives
 
 The full architecture, data model, and build-milestone history are in the

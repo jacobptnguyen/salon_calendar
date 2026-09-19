@@ -2,6 +2,8 @@
 
 ## [**Live demo →**](https://saloncalendar.vercel.app/)
 
+Sample data only, no login. Edits reset when you reload.
+
 ![The calendar, showing a month full of appointments](docs/images/calendar-screenshot.png)
 
 ## The problem

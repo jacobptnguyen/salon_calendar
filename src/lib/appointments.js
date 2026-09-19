@@ -1,7 +1,11 @@
 import { supabase } from './supabaseClient'
 import { toDateKey, addMonths } from './date'
+import { isDemo, demoAppointments } from './demo'
 
 const TABLE = 'appointments'
+
+// The database hands times back as 'HH:MM:SS'; the demo mimics that.
+const toDemoTime = (time) => (time ? `${time}:00` : null)
 
 // Keeps a locally-patched cache page in the same order the server would
 // return it in (date, then time) after an insert/update. A note with no
@@ -26,6 +30,10 @@ function monthBounds(monthDate) {
 
 export async function fetchMonthAppointments(monthDate) {
   const [start, end] = monthBounds(monthDate)
+  if (isDemo) {
+    const inMonth = demoAppointments.filter((a) => a.appointment_date >= start && a.appointment_date < end)
+    return sortByDateTime(inMonth).map((a) => ({ ...a }))
+  }
   const { data, error } = await supabase
     .from(TABLE)
     .select('*')
@@ -39,6 +47,20 @@ export async function fetchMonthAppointments(monthDate) {
 }
 
 export async function createAppointment({ customerName, dateKey, time, employeeId }) {
+  if (isDemo) {
+    const stamp = new Date().toISOString()
+    const row = {
+      id: crypto.randomUUID(),
+      customer_name: customerName,
+      appointment_date: dateKey,
+      appointment_time: toDemoTime(time),
+      employee_id: employeeId ?? null,
+      created_at: stamp,
+      updated_at: stamp,
+    }
+    demoAppointments.push(row)
+    return { ...row }
+  }
   const { data, error } = await supabase
     .from(TABLE)
     .insert({ customer_name: customerName, appointment_date: dateKey, appointment_time: time, employee_id: employeeId ?? null })
@@ -50,6 +72,16 @@ export async function createAppointment({ customerName, dateKey, time, employeeI
 }
 
 export async function updateAppointment(id, { customerName, dateKey, time }) {
+  if (isDemo) {
+    const row = demoAppointments.find((a) => a.id === id)
+    Object.assign(row, {
+      customer_name: customerName,
+      appointment_date: dateKey,
+      appointment_time: toDemoTime(time),
+      updated_at: new Date().toISOString(),
+    })
+    return { ...row }
+  }
   const { data, error } = await supabase
     .from(TABLE)
     .update({ customer_name: customerName, appointment_date: dateKey, appointment_time: time })
@@ -62,6 +94,11 @@ export async function updateAppointment(id, { customerName, dateKey, time }) {
 }
 
 export async function deleteAppointment(id) {
+  if (isDemo) {
+    const index = demoAppointments.findIndex((a) => a.id === id)
+    if (index >= 0) demoAppointments.splice(index, 1)
+    return
+  }
   const { error } = await supabase.from(TABLE).delete().eq('id', id)
   if (error) throw error
 }
@@ -70,6 +107,10 @@ export async function deleteAppointment(id) {
 // onChange receives the raw postgres_changes payload; the caller patches its
 // own in-memory cache by payload.eventType + payload.new/old.id.
 export function subscribeToAppointments(onChange, onStatusChange) {
+  if (isDemo) {
+    onStatusChange?.('SUBSCRIBED')
+    return () => {}
+  }
   const channel = supabase
     .channel('appointments-changes')
     .on('postgres_changes', { event: '*', schema: 'public', table: TABLE }, onChange)
