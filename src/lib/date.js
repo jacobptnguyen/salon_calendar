@@ -77,43 +77,56 @@ export function formatShortTime(time) {
 
 export const monthNameFormatter = new Intl.DateTimeFormat(undefined, { month: 'long' })
 
+// Everything after the time itself, shared by the three shapes below: an
+// optional am/pm ("pm", "p.m.", or a bare "p" stuck to the time), then the note. The note may follow a
+// space, a dash or other punctuation ("2:30 - Full set"), or directly after
+// the time with nothing between ("2:30Full set") when it starts with a
+// letter — people forget the space. The (?![a-z]) keeps "2:30 Amy" from
+// being read as "2:30 am" + "y".
+const AFTER_TIME = String.raw`\s*(?:(?:(?<=\d)|(?=[ap]\.?m))([ap])\.?m?\.?(?![a-z]))?(?:[\s\-–—:;,.]+|(?=[a-z]))(.+)$`
+
 // "2:30 Full set" — an explicit colon.
-const TIME_WITH_COLON = /^(\d{1,2}):(\d{2})\s*(am|pm)?\s+(.+)$/i
+const TIME_WITH_COLON = new RegExp(String.raw`^(\d{1,2}):(\d{2})` + AFTER_TIME, 'i')
 // "230 Full set" — no colon at all (a hard character for some people to
 // type, being the shifted form of the semicolon key): the last two
 // digits are the minutes, whatever's left is the hour.
-const TIME_NO_COLON = /^(\d{3,4})\s*(am|pm)?\s+(.+)$/i
+const TIME_NO_COLON = new RegExp(String.raw`^(\d{3,4})` + AFTER_TIME, 'i')
 // "9 Full set" — a bare hour, no minutes (:00).
-const TIME_HOUR_ONLY = /^(\d{1,2})\s*(am|pm)?\s+(.+)$/i
+// The lookahead keeps a time with no note ("2:30") from being read as hour 2
+// plus the note "30".
+const TIME_HOUR_ONLY = new RegExp(String.raw`^(\d{1,2})(?![:;.,]\d)` + AFTER_TIME, 'i')
 
 // Parses one line typed the way it's written on paper — "2:30 Full set" —
-// into a 24-hour 'HH:MM' time and a note. The colon is optional (see
-// TIME_NO_COLON above). A bare hour with no am/pm is read the same way
-// staff already write it on paper: 1-7 means afternoon/evening, 8-11
-// means morning, 12 means noon. That's never actually ambiguous for this
-// salon, which never opens before 9am or past 7:30pm.
+// into a 24-hour 'HH:MM' time and a note. A line with no time falls out of
+// the chronological order, so this forgives as much as it safely can: the
+// colon is optional (see TIME_NO_COLON), a slip like "2;30", "2;;30" or
+// "2 : 30" counts as a colon, the space before the note may be missing, and
+// hours 13-23 are taken as 24-hour time. A bare hour with no am/pm is read
+// the same way staff already write it on paper: 1-7 means afternoon/evening,
+// 8-11 means morning, 12 means noon. That's never actually ambiguous for
+// this salon, which never opens before 9am or past 7:30pm.
 // Returns null if the text doesn't start with a recognizable time.
 export function parseTimeAndNote(text) {
-  const trimmed = text.trim()
-  let hour12, minute, marker, note
+  const trimmed = text.trim().replace(/^(\d{1,2})(?:\s*[:;]+\s*|[.,])(?=\d{2})/, '$1:')
+  let hour, minute, marker, note
 
   const withColon = TIME_WITH_COLON.exec(trimmed)
   const noColon = !withColon && TIME_NO_COLON.exec(trimmed)
   const hourOnly = !withColon && !noColon && TIME_HOUR_ONLY.exec(trimmed)
 
   if (withColon) {
-    hour12 = Number(withColon[1])
+    hour = Number(withColon[1])
     minute = Number(withColon[2])
     marker = withColon[3]
     note = withColon[4]
   } else if (noColon) {
     const digits = noColon[1]
-    hour12 = Number(digits.slice(0, -2))
+    hour = Number(digits.slice(0, -2))
     minute = Number(digits.slice(-2))
     marker = noColon[2]
     note = noColon[3]
   } else if (hourOnly) {
-    hour12 = Number(hourOnly[1])
+    hour = Number(hourOnly[1])
     minute = 0
     marker = hourOnly[2]
     note = hourOnly[3]
@@ -124,14 +137,15 @@ export function parseTimeAndNote(text) {
   marker = marker?.toLowerCase()
   note = note.trim()
 
-  if (hour12 < 1 || hour12 > 12 || minute > 59 || !note) return null
+  if (hour < 1 || hour > 23 || minute > 59 || !note) return null
 
   let hour24
-  if (marker === 'am') hour24 = hour12 % 12
-  else if (marker === 'pm') hour24 = (hour12 % 12) + 12
-  else if (hour12 === 12) hour24 = 12
-  else if (hour12 <= 7) hour24 = hour12 + 12
-  else hour24 = hour12 // bare 8-11, no marker: morning
+  if (hour > 12) hour24 = hour // already 24-hour
+  else if (marker === 'a') hour24 = hour % 12
+  else if (marker === 'p') hour24 = (hour % 12) + 12
+  else if (hour === 12) hour24 = 12
+  else if (hour <= 7) hour24 = hour + 12
+  else hour24 = hour // bare 8-11, no marker: morning
 
   return { time: `${pad(hour24)}:${pad(minute)}`, note }
 }

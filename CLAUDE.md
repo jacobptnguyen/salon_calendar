@@ -86,7 +86,12 @@ monitor. Design and lay out every screen for that first:
   line is always focused the moment it appears (on open, and again after
   each add) so typing can just continue; and a time can be typed with no
   colon at all ("230 Full set" — see `parseTimeAndNote` in
-  `lib/date.js`), since that key is hard for some people to reach. There's
+  `lib/date.js`), since that key is hard for some people to reach. Slips
+  are forgiven too, because a line with no detected time drops out of the
+  chronological order: a semicolon (or several) or a period where the colon
+  goes ("2;30", "2;;30"), a missing space before the note ("2:30Full set"),
+  a dash between them ("2:30 - Full set"), "p"/"p.m." for pm, and 24-hour
+  times. `lib/date.check.js` is the runnable check for all of this. There's
   also no placeholder example text in the blank line — it was mistaken
   for a real entry.
 - **No Save button, no separate time field, no format checking, no time

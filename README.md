@@ -27,6 +27,14 @@ tool for someone who just wants to write down a name and a time.
   write "Full set", save. No pop-ups, nothing to navigate.
 - **Built for zero training.** Big tap targets, plain language, no jargon,
   no settings menus, nothing to configure.
+- **Forgiving time entry, for people who aren't good with computers.** Type
+  an appointment the way it's written on paper — "2:30 Full set" — and
+  typos don't cost you the time, because the people using this shouldn't
+  have to know or care about the "right" format. A semicolon (or two)
+  instead of the colon (`2;30`, `2;;30`), no colon at all (`230`), no space
+  before the note (`2:30Full set`), a dash between them, `p` or `p.m.`,
+  even 24-hour time all read correctly, so every appointment stays in
+  chronological order.
 - **Live sync.** Book it on the front-desk computer, see it instantly on
   the owner's phone — no refreshing, no "did that save?"
 - **Business-hours-aware.** The time list only offers times the salon is
