@@ -7,6 +7,8 @@
 > reload. The real salon deployment is separate: it saves every appointment
 > to a database, syncs live across devices, and is protected by a 4-digit PIN.
 
+**In real use:** a local salon uses it to book its appointments, with 35+ booked so far.
+
 ![The calendar, showing a month full of appointments](docs/images/calendar-screenshot.png)
 
 ## The problem
