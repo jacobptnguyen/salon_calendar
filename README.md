@@ -2,7 +2,10 @@
 
 ## [**Live demo →**](https://saloncalendar.vercel.app/)
 
-Sample data only, no login. Edits reset when you reload.
+> **The demo doesn't save anything.** It runs on sample data in your browser,
+> with no database and no PIN, so whatever you add disappears when you
+> reload. The real salon deployment is separate: it saves every appointment
+> to a database, syncs live across devices, and is protected by a 4-digit PIN.
 
 ![The calendar, showing a month full of appointments](docs/images/calendar-screenshot.png)
 
@@ -42,14 +45,16 @@ tool for someone who just wants to write down a name and a time.
   before the note (`2:30Full set`), a dash between them, `p` or `p.m.`,
   even 24-hour time all read correctly, so every appointment stays in
   chronological order.
-- **Live sync.** Book it on the front-desk computer, see it instantly on
-  the owner's phone — no refreshing, no "did that save?"
+- **Live sync (real deployment; the demo doesn't save).** Book it on the
+  front-desk computer, see it instantly on the owner's phone — no
+  refreshing, no "did that save?"
 - **Business-hours-aware.** The time list only offers times the salon is
   open, so there's no 2 AM appointment by accident.
 - **Same-time appointments just work.** Multiple staff can each have a
   client at once — the app doesn't treat that as a conflict.
-- **A PIN, not a password.** Connecting a device takes a 4-digit PIN,
-  the kind everyone already knows from a debit card.
+- **A PIN, not a password (real deployment only; the demo has no PIN).**
+  Connecting a device takes a 4-digit PIN, the kind everyone already knows
+  from a debit card.
 - **Installs like an app.** Add it to a home screen or desktop — no App
   Store, no download, and it updates itself.
 
