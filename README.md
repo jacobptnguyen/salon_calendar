@@ -22,7 +22,7 @@ This digital calendar replaces all of those physical calendars with one
 shared calendar that everyone can see, and that can still be filtered down
 to any one employee's appointments.
 
-Digital calendars (Google Calendar, etc.) aren't a real alternative here —
+Digital calendars aren't a real alternative here —
 the staff using this aren't comfortable with them. Event dialogs,
 timezones, invites, a separate login for every person: it's the wrong
 tool for someone who just wants to write down a name and a time.
